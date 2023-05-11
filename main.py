@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 @app.route('/index', methods=['GET'])
 def index():
-    return render_template('index.html')
+    return render_template('my-app/public/index.html')
 
 
 if __name__ == '__main__':
