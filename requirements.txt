@@ -1,0 +1,8 @@
+Flask
+numpy
+networkx
+sigma
+pandas
+streamlit
+streamlit_drawable_canvas
+matplotlib
