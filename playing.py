@@ -2,104 +2,41 @@ import streamlit as st
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
-# plt.style.use("seaborn-v0_8-whitegrid")
+import pandas as pd
+import numpy as np
+import time
+# # Создайте пустой DataFrame с нужными колонками
+# df = pd.DataFrame(columns=["x", "y"])
 
-# fig = plt.figure()
-# ax = plt.axes(xlim=(0, 4), ylim=(-2, 2))
-# line, = ax.plot([], [], lw=3)
+# # Создайте пустой график и сохраните его объект в переменной chart
+# chart = st.line_chart(df)
 
-# def init():
-#     line.set_data([], [])
-#     return line,
+# # Инициализируйте переменную x
+# x = 2
 
-# def animate(i):
-#     x = np.linspace(0, 4, 1000)
-#     y = np.sin(2 * np.pi * (x - 0.01 * i))
-#     line.set_data(x, y)
-#     return line,
+# for i in range(1, 4):
+#     x = x**2
+#     # Добавьте новую строку в DataFrame используя метод loc
+#     df.loc[i] = [x, i]
+#     # Обновите график, используя метод add_rows()
+#     chart.add_rows(df.iloc[-1:])
 
-# anim = FuncAnimation(fig, animate, init_func=init,
-#                      frames=200, interval=20, blit=True)
-
-# # Создаем переменную для хранения анимации
-# anim_variable = anim
-
-# # Выводим анимацию на страницу Streamlit с помощью функции st.pyplot()
-# st.pyplot(fig)
-
-# # Запускаем анимацию с помощью функции plt.show()
-# plt.show()
-
-import matplotlib.pyplot as plt 
-import matplotlib.animation as animation 
-import numpy as np 
 import streamlit as st
-from PIL import Image
-  
-plt.style.use('dark_background') 
-  
-fig = plt.figure() 
-ax = plt.axes(xlim=(-50, 50), ylim=(-50, 50)) 
-line, = ax.plot([], [], lw=2) 
-def init(): 
-    line.set_data([], []) 
-    return line, 
-  
-xdata, ydata = [], [] 
 
-def animate(i): 
-    t = 0.1 * i 
-    x = t * np.sin(t) 
-    y = t * np.cos(t) 
-    xdata.append(x) 
-    ydata.append(y) 
-    line.set_data(xdata, ydata) 
-    return line, 
+# Инициализируйте переменную x
+x = 2
 
-plt.title('Создаем спираль в matplotlib') 
+# Создайте пустой график
+chart_data = {'x':[], 'iter':[]}
+chart = st.line_chart(chart_data)
 
-plt.axis('off') 
-anim = animation.FuncAnimation(fig, animate, init_func=init, 
-                               frames=500, interval=20, blit=True) 
-anim.save('coil.gif', writer='pillow')
-gif_path = "coil.gif"
-st.image(gif_path, output_format="gif")
-
-
-
-
-
-# import streamlit as st 
-# import numpy as np 
-# from matplotlib import pyplot as plt 
-# from matplotlib.animation import FuncAnimation 
-
-# # Agg backend, который подходит для Streamlit 
-# import matplotlib
-# matplotlib.use('Agg') 
-
-# plt.style.use("seaborn-v0_8-whitegrid") 
- 
-# fig = plt.figure() 
-# ax = plt.axes(xlim=(0, 4), ylim=(-2, 2)) 
-# line, = ax.plot([], [], lw=3) 
- 
-# def init(): 
-#     line.set_data([], []) 
-#     return line, 
- 
-# def animate(i): 
-#     x = np.linspace(0, 4, 1000) 
-#     y = np.sin(2 * np.pi * (x - 0.01 * i)) 
-#     line.set_data(x, y) 
-#     return line, 
- 
-# anim = FuncAnimation(fig, animate, init_func=init, 
-#                      frames=200, interval=20, blit=True) 
-# st.write(fig)
-
-
-# import streamlit as st
-
-# gif_path = "sine_wave.gif"
-# st.image(gif_path, output_format="gif")
+# Запустите цикл
+for i in range(1, 4):
+    # Увеличьте переменную x на 2
+    x = x**2
+    # Добавьте значение x и количества итераций в списки данных для графика
+    chart_data['x'].append(x)
+    chart_data['iter'].append(i)
+    # Обновите график передав ему обновленные данные
+    chart.add_rows({'x':[x], 'iter':[i]})
+    time.sleep(1)
