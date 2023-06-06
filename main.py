@@ -2,45 +2,79 @@ import pandas as pd
 from PIL import Image
 import streamlit as st
 from streamlit_drawable_canvas import st_canvas
+import numpy as np
+import re
+import streamlit as st
+import pandas as pd
+from io import StringIO
+import sys
+sys.path.append("../Project")
+from Project.Classes.Ant import Ant
+from Project.Classes.TrackOfWalk import TrackOfWalk
+from random import shuffle
 
-drawing_mode = st.sidebar.selectbox(
-    "Drawing tool:", ("point", "line")
-)
+def iteration(ant: Ant,
+               pos: iter,
+               feromon_map_updater: TrackOfWalk, 
+               feromon_map: np.ndarray, 
+               distance_map: np.ndarray):
+    track = ant.walk(pos=pos, 
+                     distance_matrix=distance_map, 
+                     feromon_matrix=feromon_map)
+    feromon_map = feromon_map_updater.update(track=track, 
+                                                feromon_matrix=feromon_map)
+    return feromon_map
 
-stroke_width = st.sidebar.slider("Stroke width: ", 1, 25, 3)
-element_color = 'rgba(52, 235, 229, 0.9)'
-if drawing_mode == 'point':
-    point_display_radius = st.sidebar.slider("Point display radius: ", 1, 25, 3)
-if drawing_mode == 'line':
-    element_color = 'rgba(0, 0, 0, 0.9)'
-# stroke_color = st.sidebar.color_picker("Stroke color hex: ")
-bg_color = st.sidebar.color_picker("Background color hex: ", "#eee")
-realtime_update = st.sidebar.checkbox("Update in realtime", True)
+def Dijkstra(N, S, matrix):
+	valid = [True]*N        
+	weight = [np.inf]*N
+	weight[S] = 0
+	way = []
+	for i in range(N):
+		min_weight = np.inf
+		ID_min_weight = -1
+		for j in range(N):
+			if valid[j] and weight[j] < min_weight:
+				min_weight = weight[j]
+				ID_min_weight = j
+		for z in range(N):
+			if weight[ID_min_weight] + matrix[ID_min_weight][z] < weight[z]:
+				weight[z] = weight[ID_min_weight] + matrix[ID_min_weight][z]
+		valid[ID_min_weight] = False
+		way.append(ID_min_weight)
+	return weight, way
 
-    
+uploaded_file = st.file_uploader("Choose a file")
+iterations = st.text_input('Iterations', 10)
+alpha = st.text_input('Alpha', 1)
+betha = st.text_input('Betha', 1)
+ant_walk_distance = st.text_input('Ant walk distance', 'auto')
+n_ants = st.text_input('Num of ants', 'auto')
+feromon_volume_set = st.text_input('Feromon volume set', 'auto')
+feromon_erosion_set = st.text_input('Feromon erosion speed', 'auto')
 
-# Create a canvas component
-canvas_result = st_canvas(
-    fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
-    stroke_width=stroke_width,
-    stroke_color='rgba(52, 235, 229, 0.9)' if drawing_mode == 'point' else 'rgba(0, 0, 0, 0.9)',
-    background_color=bg_color,
-    background_image=None,
-    update_streamlit=realtime_update,
-    height=150,
-    drawing_mode=drawing_mode,
-    point_display_radius=point_display_radius if drawing_mode == 'point' else 0,
-    key="canvas",
-)
-
-if canvas_result.json_data is not None:
-    objects = pd.json_normalize(canvas_result.json_data["objects"])
-    js = canvas_result.json_data
-    for i in js['objects']:
-        if (i['type'] == 'circle'):
-            i['left'] = 10
-    canvas_result.json_data = js
-    canvas_result.image_data
-    for col in objects.select_dtypes(include=['object']).columns:
-        objects[col] = objects[col].astype("str")
-    st.dataframe(objects)
+if uploaded_file is not None:
+    bytes_data = uploaded_file.getvalue()
+    dataframe = pd.read_csv(uploaded_file, sep=';')
+    num_of_iterations = iterations
+    distance_map = dataframe.to_numpy()
+    feromon_map = np.random.rand(distance_map.shape[0], distance_map.shape[0])
+    n_ants = int(n_ants) if n_ants.isnumeric() else max(distance_map.shape[0]//4, 1)
+    ants = [Ant(walk_distance=int(ant_walk_distance) if ant_walk_distance.isnumeric() else distance_map.shape[0]+1, a=alpha, b=betha) for _ in range(0, n_ants)]
+    positions = [[i, i] for i in range(0, 100, n_ants)]
+    try:
+        feromon_erosion_set = float(feromon_erosion_set)
+    except ValueError:
+          feromon_erosion_set = 0.999
+    try:
+        feromon_volume_set = float(feromon_volume_set)
+    except ValueError:
+          feromon_volume_set = distance_map.shape[0]
+    feromon_map_updater = TrackOfWalk(feromon_volume=feromon_volume_set, feromon_erosion_speed=1-feromon_erosion_set)
+    for _ in range(int(num_of_iterations)):
+        for ant, pos in zip(ants, positions):
+            feromon_map = iteration(ant, pos, feromon_map_updater, feromon_map, distance_map)
+    way = Dijkstra(distance_map.shape[0], 1, feromon_map*(-1))[1]
+    way = np.array(list(zip(way[:-2], way[1:])))
+    st.write(sum([distance_map[i[0], i[1]] for i in way]))
+    # print(distance_map)
