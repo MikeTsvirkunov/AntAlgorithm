@@ -12,6 +12,8 @@ sys.path.append("../Project")
 from Project.Classes.Ant import Ant
 from Project.Classes.TrackOfWalk import TrackOfWalk
 from random import shuffle
+from streamlit_modal import Modal
+import streamlit.components.v1 as components
 
 def iteration(ant: Ant,
                pos: iter,
@@ -44,7 +46,10 @@ def Dijkstra(N, S, matrix):
 		way.append(ID_min_weight)
 	return weight, way
 
+
+modal = Modal("Demo Modal", key='streamlit-modal-default')
 uploaded_file = st.file_uploader("Choose a file")
+findout = st.button("Findout")
 iterations = st.text_input('Iterations', 10)
 alpha = st.text_input('Alpha', 1)
 betha = st.text_input('Betha', 1)
@@ -52,8 +57,10 @@ ant_walk_distance = st.text_input('Ant walk distance', 'auto')
 n_ants = st.text_input('Num of ants', 'auto')
 feromon_volume_set = st.text_input('Feromon volume set', 'auto')
 feromon_erosion_set = st.text_input('Feromon erosion speed', 'auto')
+global res
+res = 0
 
-if uploaded_file is not None:
+if findout and uploaded_file is not None:
     bytes_data = uploaded_file.getvalue()
     dataframe = pd.read_csv(uploaded_file, sep=';')
     num_of_iterations = iterations
@@ -75,6 +82,27 @@ if uploaded_file is not None:
         for ant, pos in zip(ants, positions):
             feromon_map = iteration(ant, pos, feromon_map_updater, feromon_map, distance_map)
     way = Dijkstra(distance_map.shape[0], 1, feromon_map*(-1))[1]
-    way = np.array(list(zip(way[:-2], way[1:])))
-    st.write(sum([distance_map[i[0], i[1]] for i in way]))
+    way = np.array(list(zip(way[:-2], way[1:]))) 
+    st.session_state['res'] = sum([distance_map[i[0], i[1]] for i in way])
+    # res = sum([distance_map[i[0], i[1]] for i in way])
     # print(distance_map)
+    modal.open()
+
+if modal.is_open():
+    with modal.container():
+        st.write("Results")
+        html_string = '''
+        <h2>Results:<h2>
+        <h1>''' + str(st.session_state['res']) + '''</h1>
+
+        <script language="javascript">
+        document.querySelector("h1").style.color = "green";
+        document.querySelector("h1").style.fontStyle = "Source Sans";
+        document.querySelector("h2").style.fontStyle = "Source Sans";
+        </script>
+        '''
+        components.html(html_string)
+
+    st.write("Some fancy text")
+    value = st.checkbox("Check me")
+    st.write(f"Checkbox checked: {value}")
